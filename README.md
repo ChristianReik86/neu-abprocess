@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AB-Process – Auftragsbestätigungen automatisch verarbeiten
 
-## Getting Started
+Verarbeiten Sie Auftragsbestätigungen automatisch aus Ihrem E-Mail-Postfach und synchronisieren Sie diese direkt in Ihr ERP-System.
 
-First, run the development server:
+## 1-Klick Deploy
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/christianreik86/neu-abprocess&env=NEXTAUTH_SECRET,NEXTAUTH_URL,NEXT_PUBLIC_APP_URL,DATABASE_URL,STRIPE_SECRET_KEY,NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY&envDescription=Alle%20ben%C3%B6tigten%20Umgebungsvariablen&envLink=https://github.com/christianreik86/neu-abprocess%23umgebungsvariablen&project-name=ab-process&repository-name=ab-process)
+
+> **Datenbank:** Kostenlose PostgreSQL bei [Neon](https://neon.tech) anlegen und die Connection-URL als `DATABASE_URL` eintragen.
+
+## Lokale Installation
 
 ```bash
+git clone https://github.com/christianreik86/neu-abprocess
+cd neu-abprocess
+cp .env.example .env   # .env befüllen
+npm install
+npx prisma migrate dev
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+App läuft auf → [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Umgebungsvariablen
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable | Beschreibung |
+|---|---|
+| `DATABASE_URL` | PostgreSQL Connection-String (z.B. von [Neon](https://neon.tech)) |
+| `NEXTAUTH_SECRET` | Zufälliger Schlüssel: `openssl rand -base64 32` |
+| `NEXTAUTH_URL` | URL der App, z.B. `https://meine-app.vercel.app` |
+| `NEXT_PUBLIC_APP_URL` | Gleiche URL wie `NEXTAUTH_URL` |
+| `STRIPE_SECRET_KEY` | Aus dem [Stripe Dashboard](https://dashboard.stripe.com) |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Aus dem Stripe Dashboard |
+| `STRIPE_WEBHOOK_SECRET` | Via `stripe listen` generiert |
+| `STRIPE_PRICE_STARTER` | Stripe Price-ID für Starter-Plan |
+| `STRIPE_PRICE_BUSINESS` | Stripe Price-ID für Business-Plan |
+| `STRIPE_PRICE_PROFESSIONAL` | Stripe Price-ID für Professional-Plan |
+| `STRIPE_PRICE_ENTERPRISE` | Stripe Price-ID für Enterprise-Plan |
 
-## Learn More
+## Features
 
-To learn more about Next.js, take a look at the following resources:
+- 📧 **E-Mail-Integration** – IMAP-Postfächer automatisch auslesen
+- 📄 **Auftragsbestätigungen** – Erfassen, prüfen, genehmigen
+- 🔗 **ERP-Synchronisation** – SAP, DATEV, Lexoffice, sevDesk, Dynamics 365 u.v.m.
+- 💳 **Abonnement-Abrechnung** – via Stripe, basierend auf Belegen/Monat
+- 🔐 **Authentifizierung** – NextAuth mit sicherer Session-Verwaltung
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Preispläne
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Plan | Preis | Belege/Monat |
+|---|---|---|
+| Free | Kostenlos | 10 |
+| Starter | 29 €/Monat | 100 |
+| Business | 79 €/Monat | 500 |
+| Professional | 149 €/Monat | 2.000 |
+| Enterprise | 299 €/Monat | Unbegrenzt |
