@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String?
+  emailVerified DateTime?
+  image         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts       Account[]
+  sessions       Session[]
+  organization   Organization? @relation(fields: [organizationId], references: [id])
+  organizationId String?
+  role           UserRole      @default(MEMBER)
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users              User[]
+  subscription       Subscription?
+  emailConfigs       EmailConfig[]
+  erpConfigs         ErpConfig[]
+  orderConfirmations OrderConfirmation[]
+  invoices           Invoice[]
+}
+
+model Subscription {
+  id                   String             @id @default(cuid())
+  organizationId       String             @unique
+  organization         Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stripeCustomerId     String?            @unique
+  stripeSubscriptionId String?            @unique
+  stripePriceId        String?
+  plan                 SubscriptionPlan   @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart   DateTime?
+  currentPeriodEnd     DateTime?
+  documentsUsed        Int                @default(0)
+  documentsLimit       Int                @default(10)
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+}
+
+model EmailConfig {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  label          String
+  host           String
+  port           Int          @default(993)
+  secure         Boolean      @default(true)
+  username       String
+  password       String
+  folder         String       @default("INBOX")
+  isActive       Boolean      @default(true)
+  lastSyncAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model ErpConfig {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  label          String
+  type           ErpType
+  baseUrl        String
+  apiKey         String?
+  username       String?
+  password       String?
+  customHeaders  Json?
+  isActive       Boolean      @default(true)
+  lastSyncAt     DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model OrderConfirmation {
+  id              String                  @id @default(cuid())
+  organizationId  String
+  organization    Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  orderNumber     String?
+  supplierName    String?
+  supplierEmail   String?
+  subject         String?
+  emailReceivedAt DateTime?
+  amount          Float?
+  currency        String?                 @default("EUR")
+  status          OrderConfirmationStatus @default(PENDING)
+  rawEmailContent String?
+  parsedData      Json?
+  erpSyncStatus   ErpSyncStatus          @default(NOT_SYNCED)
+  erpSyncedAt     DateTime?
+  erpReference    String?
+  notes           String?
+  attachments     Attachment[]
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+}
+
+model Attachment {
+  id                  String            @id @default(cuid())
+  orderConfirmationId String
+  orderConfirmation   OrderConfirmation @relation(fields: [orderConfirmationId], references: [id], onDelete: Cascade)
+  filename            String
+  contentType         String
+  size                Int
+  url                 String?
+  createdAt           DateTime          @default(now())
+}
+
+model Invoice {
+  id              String        @id @default(cuid())
+  organizationId  String
+  organization    Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  stripeInvoiceId String?       @unique
+  amount          Int
+  currency        String        @default("eur")
+  status          InvoiceStatus @default(DRAFT)
+  period          String?
+  pdfUrl          String?
+  createdAt       DateTime      @default(now())
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MEMBER
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  BUSINESS
+  PROFESSIONAL
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELED
+  PAST_DUE
+  UNPAID
+  TRIALING
+}
+
+enum ErpType {
+  SAP
+  NAVISION
+  DYNAMICS365
+  SAGE
+  DATEV
+  LEXOFFICE
+  SEVDESK
+  CUSTOM_REST
+  CUSTOM_SOAP
+}
+
+enum OrderConfirmationStatus {
+  PENDING
+  REVIEWED
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+enum ErpSyncStatus {
+  NOT_SYNCED
+  SYNCING
+  SYNCED
+  FAILED
+}
+
+enum InvoiceStatus {
+  DRAFT
+  OPEN
+  PAID
+  VOID
+}
