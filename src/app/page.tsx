@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FileCheck2, Mail, Database, BarChart3, Shield, Zap, CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PLANS, formatPrice } from "@/lib/stripe";
+import { PLANS, formatPrice } from "@/lib/plans";
 
 export default function LandingPage() {
   const plans = Object.entries(PLANS).filter(([key]) => key !== "FREE");

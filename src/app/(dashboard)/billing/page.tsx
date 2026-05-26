@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { CheckCircle2, Loader2, ExternalLink, CreditCard } from "lucide-react";
-import { PLANS, formatPrice } from "@/lib/stripe";
+import { PLANS, formatPrice } from "@/lib/plans";
 
 interface SubscriptionData {
   plan: string;

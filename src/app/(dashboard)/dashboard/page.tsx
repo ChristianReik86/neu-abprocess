@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { FileCheck2, Clock, CheckCircle2, XCircle, TrendingUp } from "lucide-react";
 import { formatDate, formatCurrency } from "@/lib/utils";
-import { PLANS } from "@/lib/stripe";
+import { PLANS } from "@/lib/plans";
 import Link from "next/link";
 
 export default async function DashboardPage() {

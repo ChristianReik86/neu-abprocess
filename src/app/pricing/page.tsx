@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { FileCheck2, CheckCircle2, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PLANS, formatPrice } from "@/lib/stripe";
+import { PLANS, formatPrice } from "@/lib/plans";
 
 export default function PricingPage() {
   const allPlans = Object.entries(PLANS);
