@@ -10,6 +10,10 @@ const checkoutSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
+  if (!stripe) {
+    return NextResponse.json({ error: "Stripe ist nicht konfiguriert." }, { status: 503 });
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
@@ -47,7 +51,6 @@ export async function POST(req: NextRequest) {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
   const checkoutSession = await stripe.checkout.sessions.create({
     customer: customerId,
     mode: "subscription",
@@ -55,13 +58,8 @@ export async function POST(req: NextRequest) {
     line_items: [{ price: planConfig.priceId, quantity: 1 }],
     success_url: `${appUrl}/billing?success=true`,
     cancel_url: `${appUrl}/pricing?canceled=true`,
-    metadata: {
-      organizationId: user.organization.id,
-      plan,
-    },
-    subscription_data: {
-      metadata: { organizationId: user.organization.id, plan },
-    },
+    metadata: { organizationId: user.organization.id, plan },
+    subscription_data: { metadata: { organizationId: user.organization.id, plan } },
     locale: "de",
   });
 

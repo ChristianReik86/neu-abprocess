@@ -4,6 +4,10 @@ import { prisma } from "@/lib/prisma";
 import Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
+  if (!stripe) {
+    return NextResponse.json({ error: "Stripe ist nicht konfiguriert." }, { status: 503 });
+  }
+
   const body = await req.text();
   const sig = req.headers.get("stripe-signature")!;
 
@@ -20,10 +24,7 @@ export async function POST(req: NextRequest) {
       const { organizationId, plan } = session.metadata || {};
       if (organizationId && plan) {
         const planLimits: Record<string, number> = {
-          STARTER: 100,
-          BUSINESS: 500,
-          PROFESSIONAL: 2000,
-          ENTERPRISE: 999999,
+          STARTER: 100, BUSINESS: 500, PROFESSIONAL: 2000, ENTERPRISE: 999999,
         };
         await prisma.subscription.update({
           where: { organizationId },
@@ -37,37 +38,26 @@ export async function POST(req: NextRequest) {
       }
       break;
     }
-
     case "customer.subscription.updated": {
-      const sub = event.data.object as Stripe.Subscription;
-      const orgId = sub.metadata?.organizationId;
-      if (orgId) {
-        await prisma.subscription.updateMany({
-          where: { stripeSubscriptionId: sub.id },
-          data: {
-            status: sub.status.toUpperCase() as any,
-            currentPeriodStart: new Date((sub as any).current_period_start * 1000),
-            currentPeriodEnd: new Date((sub as any).current_period_end * 1000),
-          },
-        });
-      }
-      break;
-    }
-
-    case "customer.subscription.deleted": {
       const sub = event.data.object as Stripe.Subscription;
       await prisma.subscription.updateMany({
         where: { stripeSubscriptionId: sub.id },
         data: {
-          plan: "FREE",
-          status: "CANCELED",
-          documentsLimit: 10,
-          stripeSubscriptionId: null,
+          status: sub.status.toUpperCase() as any,
+          currentPeriodStart: new Date((sub as any).current_period_start * 1000),
+          currentPeriodEnd: new Date((sub as any).current_period_end * 1000),
         },
       });
       break;
     }
-
+    case "customer.subscription.deleted": {
+      const sub = event.data.object as Stripe.Subscription;
+      await prisma.subscription.updateMany({
+        where: { stripeSubscriptionId: sub.id },
+        data: { plan: "FREE", status: "CANCELED", documentsLimit: 10, stripeSubscriptionId: null },
+      });
+      break;
+    }
     case "invoice.payment_succeeded": {
       const invoice = event.data.object as Stripe.Invoice;
       const customer = await prisma.subscription.findUnique({
@@ -92,7 +82,6 @@ export async function POST(req: NextRequest) {
       }
       break;
     }
-
     case "invoice.payment_failed": {
       const invoice = event.data.object as Stripe.Invoice;
       await prisma.subscription.updateMany({

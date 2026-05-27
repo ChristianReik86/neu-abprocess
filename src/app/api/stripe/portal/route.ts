@@ -5,6 +5,10 @@ import { stripe } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(req: NextRequest) {
+  if (!stripe) {
+    return NextResponse.json({ error: "Stripe ist nicht konfiguriert." }, { status: 503 });
+  }
+
   const session = await getServerSession(authOptions);
   if (!session?.user) {
     return NextResponse.json({ error: "Nicht authentifiziert" }, { status: 401 });
@@ -21,7 +25,6 @@ export async function POST(req: NextRequest) {
   }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: customerId,
     return_url: `${appUrl}/billing`,
